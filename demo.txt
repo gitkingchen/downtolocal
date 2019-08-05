@@ -1,0 +1,27 @@
+以图片资源举例（jpg|jpeg|gif|png|webp|ico）
+
+通用匹配对应的线上资源（qhimg.com）
+下载到本地对应的目录里
+
+功能：
+搜索路径的选择（可以排除目录）
+引用的路径的创建
+兼容windows和mac
+
+注意：
+
+判断文件名是否存在，以 key-value的形式去查询
+如果有该文件，则要重新定义文件名(保证唯一性)
+
+
+样本：
+http资源：
+
+http://p8.qhimg.com/t0108eb043bf2af594b.png
+http://p4.qhimg.com/d/inn/d0ac2d55/ghlogo.jpg
+http://p4.qhimg.com/d/inn/1e68e9094ddd/help/instructions.png
+
+
+
+
+响应的也有https资源
