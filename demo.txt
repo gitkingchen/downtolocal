@@ -10,8 +10,23 @@
 
 注意：
 
-判断文件名是否存在，以 key-value的形式去查询
-如果有该文件，则要重新定义文件名(保证唯一性)
+1.如果不分区结构的话：
+有目录，就目录，
+没有目录，以文件名为目录
+层级都是一层
+
+
+2.如果区分结构的话，就按照结构来
+
+
+最后再看：
+/*
+如何区分：
+遍历到一个，就存一个[path]
+匹配到下一个时，从json里查，
+如果有该文件，则要重新定义文件名(保证唯一性),不改目录名，因为不太好找
+*/
+
 
 
 样本：
@@ -21,6 +36,9 @@ http://p8.qhimg.com/t0108eb043bf2af594b.png
 http://p4.qhimg.com/d/inn/d0ac2d55/ghlogo.jpg
 http://p4.qhimg.com/d/inn/1e68e9094ddd/help/instructions.png
 
+
+http://s1.qhimg.com/!67d556ec/css_reset.css
+http://s6.qhimg.com/!648ac111/css_reset.css
 
 
 
