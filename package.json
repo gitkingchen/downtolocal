@@ -1,0 +1,26 @@
+{
+  "name": "downtolocal",
+  "version": "1.0.0",
+  "description": "将线上资源改为本地资源引用",
+  "main": "main.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gitkingchen/downtolocal.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gitkingchen/downtolocal/issues"
+  },
+  "homepage": "https://github.com/gitkingchen/downtolocal#readme",
+  "dependencies": {
+    "async": "^3.1.0",
+    "request": "^2.88.0"
+  }
+}
