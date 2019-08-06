@@ -60,21 +60,23 @@ function fsPathSys(stPath, fspath, targetFile) {
           } else {
             //let nowPath = `${fspath}\\${item}`
             let nowPath = path.join(fspath, item);
-            //const excludeTarget = ["config", "views/admin", "pub.html"];
             //path.join(__dirname,stPath,)
             //console.log("fspath", fspath); //E:\work\downtolocal\example
             //console.log("item", item); //pub.html
-            var isNeed = true;
-            for (var i = 0; i < excludeTarget.length; i++) {
-              if (
-                nowPath ===
-                path.join(__dirname, locMap.searchPath, excludeTarget[i])
-              ) {
-                isNeed = false;
-              }
-            }
 
-            if (!isNeed) return;
+            if (excludeTarget.length > 0) {
+              var isNeed = true;
+              for (var i = 0; i < excludeTarget.length; i++) {
+                if (
+                  nowPath ===
+                  path.join(__dirname, locMap.searchPath, excludeTarget[i])
+                ) {
+                  isNeed = false;
+                }
+              }
+
+              if (!isNeed) return;
+            }
             //console.log("nowPath", nowPath); //E:\work\downtolocal\example\pub.html E:\work\downtolocal\example\config E:\work\downtolocal\example\views\admin
 
             let stat = fs.statSync(nowPath);
