@@ -6,7 +6,7 @@
   其他说明：
   1.同一级下，命名为相同名字的目录和文件名，并不会相互覆盖，在建立好目录后，都会追加到
   相应的目录里（Ep:demo目录和demo.html）
-  2.
+  2.区分windows和mac的路径
 */
 
 const { execSync } = require("child_process");
