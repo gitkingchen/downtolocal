@@ -7,12 +7,18 @@
   1.同一级下，命名为相同名字的目录和文件名，并不会相互覆盖，在建立好目录后，都会追加到
   相应的目录里（Ep:demo目录和demo.html）
   2.区分windows和mac的路径
+  3.脚本应放在要匹配目录的外层
+  4.在一个项目目录里，针对同一个文件名命名的文件，如果发现在匹配时有相同的名字时，会采用
+  获取CDN中的hash值来做区分
+
 
   优化步骤：
   1.增加目录排除功能
   2.区别windows和mac
   3.优化代码
   4.跑本地版和safec，寻找问题，index问题，css
+
+
 
 */
 
@@ -25,7 +31,10 @@ const async = require("async");
 const request = require("request");
 const chalk = require('chalk');
 
-const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*qhimg.*?\.(jpg|jpeg|gif|png|webp|ico)/g;
+//const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(jpg|jpeg|gif|png|webp|ico)/g;
+const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(css)/g;
+const bit = 8;
+const cdnRule = '[0-9a-zA-Z!]{'+ bit +',}';//8位hash，不同公司不一样，为了区分相同文件名的情况
 const locMap = {
   searchPath: "/example",
   files: [".html"],
@@ -36,12 +45,12 @@ const locMap = {
 const destSaveLoc = path.join(__dirname, locMap.destLocPath); // E:\work\downtolocal\example\www\static\localres\
 //console.log('destSaveLoc',destSaveLoc)
 const excludeTarget = [
-  "config",
-  "pub.html",
-  "views",
-  "www",
-  "demo",
-  "popup"
+  // "config",
+  // "pub.html",
+  // "views",
+  // "www",
+  // "demo",
+  // "popup"
 ]; //精确到文件或者目录
 
 
@@ -128,9 +137,10 @@ function startDownload(dir, imageLinks) {// 存放的目录位置,[下载链接1
     function(src, callback) {
       console.log(chalk.cyan.bold('下载',src));
       if (src.indexOf("http") == -1) src = "http:" + src;
+
       downloadImgs(
         src,
-        path.resolve(newDir, src.split("/")[src.split("/").length - 1]),
+        path.resolve(newDir, dealFileName(src)),
         function(data) {//写完文件后
           // 保存的最终地址（目录+文件名）
           callback(null, src);
@@ -167,6 +177,13 @@ function mkdirsSync(name) {
   }
 }
 /*创建目录*/
+function dealFileName(matched){
+  var fileName = matched.split("/")[matched.split("/").length - 1];
+  var hash = matched.match(new RegExp(cdnRule,'g'));
+  var tag = hash?hash[0].substring(0,bit):'';
+  fileName = tag+'_'+fileName;
+  return fileName;
+}
 
 function matchDemo(curPath, body) {
   //读取文件内容，进行内容的替换
@@ -177,6 +194,7 @@ function matchDemo(curPath, body) {
 
   if (body.match(imgReg) && dirname) {
     //匹配到CDN
+    //console.log('dirname',dirname)
     if (dirname[1].indexOf("/") != -1) {
       //如果有目录
       proDestDir = path.join(destSaveLoc, dirname[1]);
@@ -189,14 +207,16 @@ function matchDemo(curPath, body) {
       mkdirsSync(proDestDir);
     }
 
+    
     startDownload(proDestDir, body.match(imgReg)); //文件内的一块下载
     var endbody = body.replace(imgReg, function(matched) {//逐一替换
+      
       //进行地址替换
       return (
         "/static/localres/" +
         targetPath +
         "/" +
-        matched.split("/")[matched.split("/").length - 1]
+        dealFileName(matched)
       );
     });
 
