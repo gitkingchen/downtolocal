@@ -11,14 +11,14 @@
   4.在一个项目目录里，针对同一个文件名命名的文件，如果发现在匹配时有相同的名字时，会采用
   获取CDN中的hash值来做区分
 
-
   优化步骤：
   1.增加目录排除功能
   2.区别windows和mac
   3.优化代码
   4.跑本地版和safec，寻找问题，index问题，css
-
-
+  5.增加超时
+  6.下载错误的输出到日志
+  7.匹配所有文件
 
 */
 
@@ -31,14 +31,14 @@ const async = require("async");
 const request = require("request");
 const chalk = require('chalk');
 
-//const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(jpg|jpeg|gif|png|webp|ico)/g;
-const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(css)/g;
+const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(jpg|jpeg|gif|png|webp|ico)/g;
+//const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(css)/g;
 const bit = 8;
 const cdnRule = '[0-9a-zA-Z!]{'+ bit +',}';//8位hash，不同公司不一样，为了区分相同文件名的情况
 const locMap = {
-  searchPath: "/example",
-  files: [".html"],
-  destLocPath: "/example/www/static/localres/"
+  searchPath: "/src",
+  files: [".html",".css",".phtml","php",".scss",".less",".js"],
+  destLocPath: "src/www/static/localres/"
 };
 //console.log('destLocPath',destLocPath) // /example/www/static/localres/
 
@@ -122,7 +122,13 @@ function fsPathSys(fspath, targetFile) {
 /*下载*/
 var downloadImgs = function(src, dest, callback) {
   //文件源地址，下载后存放的目标地址
-  request(src)
+  request({url:src,timeout: 5000})
+    .on('error', function(err){//要在pipe之前
+      if(err.code == 'ESOCKETTIMEDOUT'){
+        console.log('超时，下载失败',src,dest)  
+      }
+      callback(dest);
+    })
     .pipe(fs.createWriteStream(dest))
     .on("close", function() {
       //读取到目标，写到最终目录里
@@ -143,6 +149,8 @@ function startDownload(dir, imageLinks) {// 存放的目录位置,[下载链接1
         path.resolve(newDir, dealFileName(src)),
         function(data) {//写完文件后
           // 保存的最终地址（目录+文件名）
+          // console.log(err.code === 'ETIMEDOUT');
+          // console.log(err.connect === true);
           callback(null, src);
         }
       );
