@@ -181,7 +181,7 @@ function dealFileName(matched){
   var fileName = matched.split("/")[matched.split("/").length - 1];
   var hash = matched.match(new RegExp(cdnRule,'g'));
   var tag = hash?hash[0].substring(0,bit):'';
-  fileName = tag+'_'+fileName;
+  fileName = (tag?(tag+'_'):'')+fileName;
   return fileName;
 }
 
