@@ -20,6 +20,7 @@
   6.下载错误的输出到日志
   7.匹配所有文件
 
+
 */
 
 const {
@@ -83,8 +84,8 @@ function fsPathSys(fspath, targetFile) {
             //console.log("item", item); //pub.html
 
             if (excludeTarget.length > 0) { //对定义的目录进行过滤
-              var isNeed = true;
-              for (var i = 0; i < excludeTarget.length; i++) {
+              let isNeed = true;
+              for (let i = 0; i < excludeTarget.length; i++) {
                 if (
                   nowPath ===
                   path.join(__dirname, locMap.searchPath, excludeTarget[i])
@@ -119,13 +120,16 @@ function fsPathSys(fspath, targetFile) {
   }
 }
 
+let errStr = '';
 /*下载*/
-var downloadImgs = function(src, dest, callback) {
+let downloadImgs = function(src, dest, callback) {
+
   //文件源地址，下载后存放的目标地址
-  request({url:src,timeout: 5000})
+  request({url:src,timeout: 4000})
     .on('error', function(err){//要在pipe之前
       if(err.code == 'ESOCKETTIMEDOUT'){
         console.log('超时，下载失败',src,dest)  
+        errStr += `源文件地址：${src}\r\n替换后的地址：${dest}\r\n\r\n\r\n`;
       }
       callback(dest);
     })
@@ -137,7 +141,7 @@ var downloadImgs = function(src, dest, callback) {
 };
 
 function startDownload(dir, imageLinks) {// 存放的目录位置,[下载链接1,下载链接2]
-  var newDir = dir.indexOf(".") == -1 ? dir : path.dirname(dir);
+  let newDir = dir.indexOf(".") == -1 ? dir : path.dirname(dir);
   async.mapSeries(
     imageLinks,
     function(src, callback) {
@@ -186,9 +190,9 @@ function mkdirsSync(name) {
 }
 /*创建目录*/
 function dealFileName(matched){
-  var fileName = matched.split("/")[matched.split("/").length - 1];
-  var hash = matched.match(new RegExp(cdnRule,'g'));
-  var tag = hash?hash[0].substring(0,bit):'';
+  let fileName = matched.split("/")[matched.split("/").length - 1];
+  let hash = matched.match(new RegExp(cdnRule,'g'));
+  let tag = hash?hash[0].substring(0,bit):'';
   fileName = (tag?(tag+'_'):'')+fileName;
   return fileName;
 }
@@ -196,7 +200,7 @@ function dealFileName(matched){
 function matchDemo(curPath, body) {
   //读取文件内容，进行内容的替换
   //console.log('curPath',curPath)// E:\work\downtolocal\example\demo.html
-  var proDestDir = '',targetPath = '',dirname = curPath.split(path.sep).join('/').match(
+  let proDestDir = '',targetPath = '',dirname = curPath.split(path.sep).join('/').match(
     new RegExp(locMap.searchPath + "\/(.*)") // 用RegExp 可以拼接变量
   );
 
@@ -217,7 +221,7 @@ function matchDemo(curPath, body) {
 
     
     startDownload(proDestDir, body.match(imgReg)); //文件内的一块下载
-    var endbody = body.replace(imgReg, function(matched) {//逐一替换
+    let endbody = body.replace(imgReg, function(matched) {//逐一替换
       
       //进行地址替换
       return (
@@ -241,5 +245,18 @@ function writeFs(curPath, body) {
 }
 
 process.on("exit", code => {
+  //必须执行同步操作
   console.log(chalk.red.bold('已匹配结束'));
+});
+
+
+process.on("beforeExit", code => {
+  //可以执行异步操作
+  //当 Node.js 清空其事件循环并且没有其他工作要安排时，会触发 'beforeExit' 事件。
+  if(errStr){
+    fs.writeFile('./error.txt', errStr, function(){
+      console.log(chalk.red.bold('已生成错误日志:error.txt'));
+      process.exit();//不加会循环beforeExit
+    });
+  }
 });
