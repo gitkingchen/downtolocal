@@ -19,7 +19,7 @@
   6.下载错误输出日志
   7.匹配所有文件
   8.成功多少个，失败多少个
-  9.async await
+  9.忽略node_modules/package.json等
 
 */
 const {
@@ -36,9 +36,9 @@ const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(jpg|jpeg|g
 const bit = 8;
 const cdnRule = '[0-9a-zA-Z!]{'+ bit +',}';//8位hash，不同公司不一样，为了区分相同文件名的情况
 const locMap = {
-  searchPath: "/src/www",
-  files: [".html",".css",".phtml",".md",".vue",".sass",".scss",".less",".js"],
-  //files: [],
+  searchPath: "/src",
+  //files: [".html",".css",".phtml",".md",".vue",".sass",".scss",".less",".js"],
+  files: [],
   /*数组为空是所有文件，会扫描所有类型的文件，如果不知道有什么类型的文件，推荐用，但会扫描很多不必要的文件
   比如图片 字体 媒体资源等
   */
@@ -49,7 +49,7 @@ const destSaveLoc = path.join(__dirname, locMap.destLocPath); // E:\work\downtol
 const excludeTarget = [
   // "config",
   // "pub.html",
-  // "views",
+  // "/application/views",
   // "www",
   // "demo",
   // "popup"
@@ -75,14 +75,15 @@ let fsPathSys = (fspath, targetFile) => {
 
             if (excludeTarget.length > 0) { //对定义的目录进行过滤
               let isNeed = true;
-              for (let i = 0; i < excludeTarget.length; i++) {
+              excludeTarget.forEach((item,i)=>{
                 if (
                   nowPath ===
-                  path.join(__dirname, locMap.searchPath, excludeTarget[i])
+                  path.join(__dirname, locMap.searchPath, item)
                 ) {
                   isNeed = false;
                 }
-              }
+              })
+              
               if (!isNeed) return;
             }
 
@@ -97,7 +98,6 @@ let fsPathSys = (fspath, targetFile) => {
                   }
                 });
               }else{
-                console.log('nowPath',nowPath)
                 readMatchFile(nowPath);
               }
             } else {
@@ -121,32 +121,9 @@ fsPathSys(
   locMap.files
 );
 
+/*下载*/
 let errStr = '';
 let succNum = 0,failNum = 0;
-/*下载*/
-let downloadImgs = (src, dest, callback) => {
-  let errType = '错误类型：';
-  //文件源地址，下载后存放的目标地址
-  request({url:src,timeout: 4000})
-    .on('error', (err) => {//要在pipe之前
-      failNum++;
-      if(err.code == 'ESOCKETTIMEDOUT'){
-        errType += '超时';
-      }else{
-        errType += '其他';
-      }
-      errStr += `${errType}\r\n状态码：${err.code}\r\n源文件地址：${src}\r\n替换后的地址：${dest}\r\n\r\n\r\n`;
-      callback(dest);
-    })
-    .pipe(fs.createWriteStream(dest))
-    .on("close", () => {
-      succNum++;
-      //读取到目标，写到最终目录里
-      callback(dest);
-    });
-};
-
-
 let startDownload = (dir, imageLinks) => {// 存放的目录位置,[下载链接1,下载链接2]
   let newDir = dir.indexOf(".") == -1 ? dir : path.dirname(dir);
   async.mapSeries(
@@ -154,18 +131,28 @@ let startDownload = (dir, imageLinks) => {// 存放的目录位置,[下载链接
     (src, callback) => {
       console.log(chalk.cyan.bold('下载',src));
       if (src.indexOf("http") == -1) src = "http:" + src;
-      downloadImgs(
-        src,
-        path.resolve(newDir, dealFileName(src)),
-        (data) => {//写完文件后
-          // 保存的最终地址（目录+文件名）
-          // console.log(err.code === 'ETIMEDOUT');
-          // console.log(err.connect === true);
+      let errType = '错误类型：';
+      //文件源地址，下载后存放的目标地址
+      let dest = path.resolve(newDir, dealFileName(src));
+      request({url:src,timeout: 4000})
+        .on('error', (err) => {//要在pipe之前
+          failNum++;
+          if(err.code == 'ESOCKETTIMEDOUT'){
+            errType += '超时';
+          }else{
+            errType += '其他';
+          }
+          errStr += `${errType}\r\n状态码：${err.code}\r\n源文件地址：${src}\r\n替换后的地址：${dest}\r\n\r\n\r\n`;
           callback(null, src);
-        }
-      );
-    },
-    (err, results) => {}
+        })
+        .pipe(fs.createWriteStream(dest))
+        .on("close", () => {
+          succNum++;
+          //读取到目标，写到最终目录里
+          callback(null, src);
+        });
+
+    }
   );
 }
 /*下载*/
@@ -203,6 +190,7 @@ let dealFileName = (matched) => {
   return fileName;
 }
 
+/*匹配文件*/
 let fileNum = 0;
 let matchFileNum = 0;
 let matchDemo = (curPath, body) => {
@@ -230,7 +218,7 @@ let matchDemo = (curPath, body) => {
     }
 
     
-    startDownload(proDestDir, body.match(imgReg)); //文件内的一块下载
+    startDownload(proDestDir, body.match(imgReg)); //文件内的资源下载
     let endbody = body.replace(imgReg, (matched) => {//逐一替换
       
       //进行地址替换
@@ -242,17 +230,13 @@ let matchDemo = (curPath, body) => {
       );
     });
 
-    writeFs(curPath, endbody); //将替换后的，写入文件内
+    //重写替换后的文件
+    fs.writeFile(curPath, endbody, err => {
+      if (err) throw err;
+    });
   }
 }
-
-/*写文件*/
-let writeFs = (curPath, body) => {
-  //重写替换后的文件
-  fs.writeFile(curPath, body, err => {
-    if (err) throw err;
-  });
-}
+/*匹配文件*/
 
 process.on("exit", code => {
   //必须执行同步操作
