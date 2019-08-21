@@ -1,7 +1,6 @@
 /* 
 
   使用说明：
-  
 
   其他说明：
   1.同一级下，命名为相同名字的目录和文件名，并不会相互覆盖，在建立好目录后，都会追加到
@@ -19,7 +18,7 @@
   5.增加超时
   6.下载错误输出日志
   7.匹配所有文件
-  8.成功多少个，失败多少个 phtml含（个）css含（个）js含（个）
+  8.成功多少个，失败多少个
   9.async await
 
 */
@@ -38,17 +37,15 @@ const bit = 8;
 const cdnRule = '[0-9a-zA-Z!]{'+ bit +',}';//8位hash，不同公司不一样，为了区分相同文件名的情况
 const locMap = {
   searchPath: "/src/www",
-  //files: [".html",".css",".phtml",".md",".vue",".sass",".scss",".less",".js"],
-  files: [],
-  /*不写的话是所有文件，会扫描所有类型的文件，如果不知道有什么类型的文件，推荐用，但会扫描很多不必要的文件
+  files: [".html",".css",".phtml",".md",".vue",".sass",".scss",".less",".js"],
+  //files: [],
+  /*数组为空是所有文件，会扫描所有类型的文件，如果不知道有什么类型的文件，推荐用，但会扫描很多不必要的文件
   比如图片 字体 媒体资源等
   */
   destLocPath: "src/www/static/localres/"
 };
-//console.log('destLocPath',destLocPath) // /example/www/static/localres/
 
 const destSaveLoc = path.join(__dirname, locMap.destLocPath); // E:\work\downtolocal\example\www\static\localres\
-//console.log('destSaveLoc',destSaveLoc)
 const excludeTarget = [
   // "config",
   // "pub.html",
@@ -58,21 +55,10 @@ const excludeTarget = [
   // "popup"
 ]; //精确到文件或者目录
 
-
-
-//console.log('path.sep',path.sep)// windows: \
-
-
-fsPathSys(
-  path.join(__dirname, locMap.searchPath),
-  locMap.files
-);
-
-function fsPathSys(fspath, targetFile) {
-  //console.log("fspath", fspath);
+let fsPathSys = (fspath, targetFile) => {
   let stat = fs.statSync(fspath);
   if (stat.isDirectory()) { //是否是目录
-    function isDirectory(err, files) {
+    let isDirectory = (err, files) => {
       //读取目录里所有文件
       if (err) {
         console.log("err", err);
@@ -111,6 +97,7 @@ function fsPathSys(fspath, targetFile) {
                   }
                 });
               }else{
+                console.log('nowPath',nowPath)
                 readMatchFile(nowPath);
               }
             } else {
@@ -129,14 +116,19 @@ function fsPathSys(fspath, targetFile) {
   }
 }
 
+fsPathSys(
+  path.join(__dirname, locMap.searchPath),
+  locMap.files
+);
+
 let errStr = '';
 let succNum = 0,failNum = 0;
 /*下载*/
-let downloadImgs = function(src, dest, callback) {
+let downloadImgs = (src, dest, callback) => {
   let errType = '错误类型：';
   //文件源地址，下载后存放的目标地址
   request({url:src,timeout: 4000})
-    .on('error', function(err){//要在pipe之前
+    .on('error', (err) => {//要在pipe之前
       failNum++;
       if(err.code == 'ESOCKETTIMEDOUT'){
         errType += '超时';
@@ -147,7 +139,7 @@ let downloadImgs = function(src, dest, callback) {
       callback(dest);
     })
     .pipe(fs.createWriteStream(dest))
-    .on("close", function() {
+    .on("close", () => {
       succNum++;
       //读取到目标，写到最终目录里
       callback(dest);
@@ -155,18 +147,17 @@ let downloadImgs = function(src, dest, callback) {
 };
 
 
-function startDownload(dir, imageLinks) {// 存放的目录位置,[下载链接1,下载链接2]
+let startDownload = (dir, imageLinks) => {// 存放的目录位置,[下载链接1,下载链接2]
   let newDir = dir.indexOf(".") == -1 ? dir : path.dirname(dir);
   async.mapSeries(
     imageLinks,
-    function(src, callback) {
+    (src, callback) => {
       console.log(chalk.cyan.bold('下载',src));
       if (src.indexOf("http") == -1) src = "http:" + src;
-
       downloadImgs(
         src,
         path.resolve(newDir, dealFileName(src)),
-        function(data) {//写完文件后
+        (data) => {//写完文件后
           // 保存的最终地址（目录+文件名）
           // console.log(err.code === 'ETIMEDOUT');
           // console.log(err.connect === true);
@@ -174,13 +165,13 @@ function startDownload(dir, imageLinks) {// 存放的目录位置,[下载链接1
         }
       );
     },
-    function(err, results) {}
+    (err, results) => {}
   );
 }
 /*下载*/
 
 /*读取文件流*/
-function readMatchFile(curPath) {
+let readMatchFile = (curPath) => {
   let readAble = fs.createReadStream(curPath);
   let body = "";
   readAble.on("data", chunk => {
@@ -193,7 +184,7 @@ function readMatchFile(curPath) {
 /*读文件*/
 
 /*创建目录*/
-function mkdirsSync(name) {
+let mkdirsSync = (name) => {
   if (fs.existsSync(name)) {
     return true;
   } else {
@@ -204,7 +195,7 @@ function mkdirsSync(name) {
   }
 }
 /*创建目录*/
-function dealFileName(matched){
+let dealFileName = (matched) => {
   let fileName = matched.split("/")[matched.split("/").length - 1];
   let hash = matched.match(new RegExp(cdnRule,'g'));
   let tag = hash?hash[0].substring(0,bit):'';
@@ -214,7 +205,7 @@ function dealFileName(matched){
 
 let fileNum = 0;
 let matchFileNum = 0;
-function matchDemo(curPath, body) {
+let matchDemo = (curPath, body) => {
   //一共读了多少文件
   fileNum++;
   //读取文件内容，进行内容的替换
@@ -226,7 +217,6 @@ function matchDemo(curPath, body) {
   if (body.match(imgReg) && dirname) {
     matchFileNum++;
     //匹配到CDN
-    //console.log('dirname',dirname)
     if (dirname[1].indexOf("/") != -1) {
       //如果有目录
       proDestDir = path.join(destSaveLoc, dirname[1]);
@@ -241,7 +231,7 @@ function matchDemo(curPath, body) {
 
     
     startDownload(proDestDir, body.match(imgReg)); //文件内的一块下载
-    let endbody = body.replace(imgReg, function(matched) {//逐一替换
+    let endbody = body.replace(imgReg, (matched) => {//逐一替换
       
       //进行地址替换
       return (
@@ -257,7 +247,7 @@ function matchDemo(curPath, body) {
 }
 
 /*写文件*/
-function writeFs(curPath, body) {
+let writeFs = (curPath, body) => {
   //重写替换后的文件
   fs.writeFile(curPath, body, err => {
     if (err) throw err;
@@ -278,7 +268,7 @@ process.on("beforeExit", code => {
   //可以执行异步操作
   //当 Node.js 清空其事件循环并且没有其他工作要安排时，会触发 'beforeExit' 事件。
   if(errStr){
-    fs.writeFile('./error.txt', `失败下载的资源数是：${failNum}个\r\n${errStr}`, function(){
+    fs.writeFile('./error.txt', `失败下载的资源数是：${failNum}个\r\n${errStr}`, () => {
       console.log(chalk.red.bold('已生成错误日志:error.txt'));
       process.exit();//不加会循环beforeExit
     });
