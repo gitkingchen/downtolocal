@@ -14,7 +14,7 @@
   1.增加目录排除功能
   2.区别windows和mac
   3.优化代码
-  4.跑本地版和safec，寻找问题，index问题，css
+  4.对文件命名重复做区分
   5.增加超时
   6.下载错误输出日志
   7.匹配所有文件
@@ -39,21 +39,23 @@ const locMap = {
   searchPath: "/src",
   //files: [".html",".css",".phtml",".md",".vue",".sass",".scss",".less",".js"],
   files: [],
-  /*数组为空是所有文件，会扫描所有类型的文件，如果不知道有什么类型的文件，推荐用，但会扫描很多不必要的文件
-  比如图片 字体 媒体资源等
+  /*
+    数组为空是会扫描所有类型的文件，如果不知道有什么类型的文件，推荐用，但会扫描很多不必要的文件，比如图片 字体 媒体资源等，这里不做区分，因为类型太多。
+    如果明确要匹配的文件类型，请指定文件类型
   */
   destLocPath: "src/www/static/localres/"
 };
 
 const destSaveLoc = path.join(__dirname, locMap.destLocPath); // E:\work\downtolocal\example\www\static\localres\
-const excludeTarget = [
-  // "config",
-  // "pub.html",
-  // "/application/views",
-  // "www",
-  // "demo",
-  // "popup"
-]; //精确到文件或者目录
+
+const excludeTarget = {
+  path:["application/controllers","application/models"],
+  //path:[], //精确到文件或者目录
+  keyword:['node_modules']//精确到路径关键词，区分大小写 比如：/node_modules/ 不限层级
+  //keyword:[]
+}
+
+
 
 let fsPathSys = (fspath, targetFile) => {
   let stat = fs.statSync(fspath);
@@ -72,20 +74,33 @@ let fsPathSys = (fspath, targetFile) => {
             let nowPath = path.join(fspath, item);
             //console.log("fspath", fspath); //E:\work\downtolocal\example
             //console.log("item", item); //pub.html
-
-            if (excludeTarget.length > 0) { //对定义的目录进行过滤
-              let isNeed = true;
-              excludeTarget.forEach((item,i)=>{
+            
+            let isNeed = true;
+            switch(true){
+              case excludeTarget.path.length > 0:
+              excludeTarget.path.forEach((item,i) => {
                 if (
                   nowPath ===
                   path.join(__dirname, locMap.searchPath, item)
                 ) {
                   isNeed = false;
+                  return;
                 }
               })
               
-              if (!isNeed) return;
+              case excludeTarget.keyword.length > 0:
+              excludeTarget.keyword.forEach((item,i) => {
+                if (
+                  nowPath.split(path.sep).join('/').match(new RegExp('\/'+item+'\/','g'))
+                ) {
+                  isNeed = false;
+                  return;
+                }
+              })
+              
             }
+
+            if (!isNeed) return;
 
             let stat = fs.statSync(nowPath);
 
@@ -230,7 +245,7 @@ let matchDemo = (curPath, body) => {
       );
     });
 
-    //重写替换后的文件
+      //重写替换后的文件
     fs.writeFile(curPath, endbody, err => {
       if (err) throw err;
     });
@@ -252,9 +267,9 @@ process.on("beforeExit", code => {
   //可以执行异步操作
   //当 Node.js 清空其事件循环并且没有其他工作要安排时，会触发 'beforeExit' 事件。
   if(errStr){
-    fs.writeFile('./error.txt', `失败下载的资源数是：${failNum}个\r\n${errStr}`, () => {
+    fs.writeFile('./error.txt', `失败下载的资源数是：${failNum}个\r\n${errStr}`,() => {
       console.log(chalk.red.bold('已生成错误日志:error.txt'));
-      process.exit();//不加会循环beforeExit
-    });
+      process.exit();//不加会循环beforeExit  
+    })
   }
 });
