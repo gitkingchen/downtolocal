@@ -1,8 +1,9 @@
 {
   "name": "downtolocal",
   "version": "1.0.0",
+  "author": "kerrie <kingdream90@163.com>",
   "description": "将线上资源改为本地资源引用",
-  "main": "",
+  "main": "q.js",
   "directories": {
     "example": "example"
   },
@@ -13,12 +14,17 @@
     "type": "git",
     "url": "git+https://github.com/gitkingchen/downtolocal.git"
   },
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/gitkingchen/downtolocal/issues"
   },
   "homepage": "https://github.com/gitkingchen/downtolocal#readme",
+  "keywords": [
+    "local",
+    "download",
+    "resource",
+    "image"
+  ],
   "dependencies": {
     "async": "^3.1.0",
     "chalk": "^2.4.2",

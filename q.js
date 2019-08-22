@@ -1,25 +1,50 @@
 /* 
+  *将线上资源改为本地资源引用
+  *@version 1.0
+  *@author jinchen on 2019/08/22
+  
+  *参数说明：
+  
+    REG：要替换的资源正则
+    BIT：取HASH的位数，主要为了区分同一个项目内的资源中有相同文件名，但不是相同文件的问题
+    CDNRULE：HASH
+    
+    搜索目录：
+    LOCMAP = {
+      searchPath: "/src", 从哪个位置开始搜索，字符串
+      //files: [".html",".css",".phtml",".md",".vue",".sass",".scss",".less",".js"], 要匹配的文件类型
+      files: [], 默认为空
+      数组为空是会扫描所有类型的文件，如果不知道有什么类型的文件，推荐用，但会扫描很多不必要的文件，比如图片 字体 媒体资源等，这里不做区分，因为类型太多。
+      如果明确要匹配的文件类型，请指定文件类型
+      destLocPath: path.join(__dirname, "src/www/static/localres/") 匹配到的资源存放的位置
+    }
+    
+    排除搜索目录：
+    EXCLUDETARGET = {
+      path:["application/controllers","application/models","application/test.html"],
+      //path:[], 默认为空，精确到文件或者目录
+      keyword:['node_modules'] 
+      //keyword:[] 默认为空，精确到路径关键词，区分大小写 比如：/node_modules/ 不限层级
+    }
 
-  使用说明：
 
-  其他说明：
-  1.同一级下，命名为相同名字的目录和文件名，并不会相互覆盖，在建立好目录后，都会追加到
-  相应的目录里（Ep:demo目录和demo.html）
-  2.区分windows和mac的路径
-  3.脚本应放在要匹配目录的外层
-  4.在一个项目目录里，针对同一个文件名命名的文件，如果发现在匹配时有相同的名字时，会采用
-  获取CDN中的hash值来做区分
 
-  优化步骤：
-  1.增加目录排除功能
-  2.区别windows和mac
-  3.优化代码
-  4.对文件命名重复做区分
-  5.增加超时
-  6.下载错误输出日志
-  7.匹配所有文件
-  8.成功多少个，失败多少个
-  9.忽略node_modules/package.json等
+  *其他说明：
+  
+    1.同一级下，命名为相同名字的目录和文件名，并不会相互覆盖，在建立好目录后，都会追加到
+    相应的目录里（Ep:demo目录和demo.html）
+    2.脚本应放在要匹配目录的外层
+    3.在一个项目目录里，针对同一个文件名命名的文件，如果发现在匹配时有相同的名字时，会采用
+    获取CDN中的hash值来做区分
+
+  *优化点：
+  
+    1.增加匹配所有文件功能    
+    2.增加目录排除功能
+    3.兼容windows/mac
+    4.区分文件命名
+    5.增加超时处理
+    6.增加错误日志
 
 */
 const {
@@ -31,30 +56,19 @@ const async = require("async");
 const request = require("request");
 const chalk = require('chalk');
 
-const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(jpg|jpeg|gif|png|webp|ico)/g;
-//const imgReg = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(css)/g;
-const bit = 8;
-const cdnRule = '[0-9a-zA-Z!]{'+ bit +',}';//8位hash，不同公司不一样，为了区分相同文件名的情况
-const locMap = {
-  searchPath: "/src",
-  //files: [".html",".css",".phtml",".md",".vue",".sass",".scss",".less",".js"],
+const REG = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(jpg|jpeg|gif|png|webp|ico)/g;
+const BIT = 8;
+const CDNRULE = '[0-9a-zA-Z!]{'+ BIT +',}';//8位hash，不同公司不一样，为了区分相同文件名的情况
+const LOCMAP = {
+  searchPath: "/example",
   files: [],
-  /*
-    数组为空是会扫描所有类型的文件，如果不知道有什么类型的文件，推荐用，但会扫描很多不必要的文件，比如图片 字体 媒体资源等，这里不做区分，因为类型太多。
-    如果明确要匹配的文件类型，请指定文件类型
-  */
-  destLocPath: "src/www/static/localres/"
+  destLocPath: path.join(__dirname, "example/www/static/localres/")
 };
 
-const destSaveLoc = path.join(__dirname, locMap.destLocPath); // E:\work\downtolocal\example\www\static\localres\
-
-const excludeTarget = {
-  path:["application/controllers","application/models"],
-  //path:[], //精确到文件或者目录
-  keyword:['node_modules']//精确到路径关键词，区分大小写 比如：/node_modules/ 不限层级
-  //keyword:[]
+const EXCLUDETARGET = {
+  path:["config","pub.html"],
+  keyword:['demo']
 }
-
 
 
 let fsPathSys = (fspath, targetFile) => {
@@ -77,19 +91,19 @@ let fsPathSys = (fspath, targetFile) => {
             
             let isNeed = true;
             switch(true){
-              case excludeTarget.path.length > 0:
-              excludeTarget.path.forEach((item,i) => {
+              case EXCLUDETARGET.path.length > 0:
+              EXCLUDETARGET.path.forEach((item,i) => {
                 if (
                   nowPath ===
-                  path.join(__dirname, locMap.searchPath, item)
+                  path.join(__dirname, LOCMAP.searchPath, item)
                 ) {
                   isNeed = false;
                   return;
                 }
               })
               
-              case excludeTarget.keyword.length > 0:
-              excludeTarget.keyword.forEach((item,i) => {
+              case EXCLUDETARGET.keyword.length > 0:
+              EXCLUDETARGET.keyword.forEach((item,i) => {
                 if (
                   nowPath.split(path.sep).join('/').match(new RegExp('\/'+item+'\/','g'))
                 ) {
@@ -132,13 +146,15 @@ let fsPathSys = (fspath, targetFile) => {
 }
 
 fsPathSys(
-  path.join(__dirname, locMap.searchPath),
-  locMap.files
+  path.join(__dirname, LOCMAP.searchPath),
+  LOCMAP.files
 );
 
 /*下载*/
-let errStr = '';
-let succNum = 0,failNum = 0;
+let 
+errStr = '', //错误日志
+succNum = 0, //下载成功数
+failNum = 0; //下载失败数
 let startDownload = (dir, imageLinks) => {// 存放的目录位置,[下载链接1,下载链接2]
   let newDir = dir.indexOf(".") == -1 ? dir : path.dirname(dir);
   async.mapSeries(
@@ -197,44 +213,47 @@ let mkdirsSync = (name) => {
   }
 }
 /*创建目录*/
+
+/*处理文件名*/
 let dealFileName = (matched) => {
   let fileName = matched.split("/")[matched.split("/").length - 1];
-  let hash = matched.match(new RegExp(cdnRule,'g'));
-  let tag = hash?hash[0].substring(0,bit):'';
+  let hash = matched.match(new RegExp(CDNRULE,'g'));
+  let tag = hash?hash[0].substring(0,BIT):'';
   fileName = (tag?(tag+'_'):'')+fileName;
   return fileName;
 }
+/*处理文件名*/
 
 /*匹配文件*/
-let fileNum = 0;
-let matchFileNum = 0;
+let 
+fileNum = 0,//一共读了多少文件
+matchFileNum = 0;//匹配的文件数
 let matchDemo = (curPath, body) => {
-  //一共读了多少文件
   fileNum++;
   //读取文件内容，进行内容的替换
   //console.log('curPath',curPath)// E:\work\downtolocal\example\demo.html
   let proDestDir = '',targetPath = '',dirname = curPath.split(path.sep).join('/').match(
-    new RegExp(locMap.searchPath + "\/(.*)") // 用RegExp 可以拼接变量
+    new RegExp(LOCMAP.searchPath + "\/(.*)")
   );
 
-  if (body.match(imgReg) && dirname) {
+  if (body.match(REG) && dirname) {
     matchFileNum++;
     //匹配到CDN
     if (dirname[1].indexOf("/") != -1) {
       //如果有目录
-      proDestDir = path.join(destSaveLoc, dirname[1]);
+      proDestDir = path.join(LOCMAP.destLocPath, dirname[1]);
       targetPath = path.dirname(dirname[1]);
       mkdirsSync(path.dirname(proDestDir));
     } else {
       //没有目录
-      proDestDir = path.join(destSaveLoc, "/", dirname[1].split(".")[0]);
+      proDestDir = path.join(LOCMAP.destLocPath, "/", dirname[1].split(".")[0]);
       targetPath = dirname[1].split(".")[0];
       mkdirsSync(proDestDir);
     }
 
     
-    startDownload(proDestDir, body.match(imgReg)); //文件内的资源下载
-    let endbody = body.replace(imgReg, (matched) => {//逐一替换
+    startDownload(proDestDir, body.match(REG)); //文件内的资源下载
+    let endbody = body.replace(REG, (matched) => {//逐一替换
       
       //进行地址替换
       return (
@@ -245,7 +264,7 @@ let matchDemo = (curPath, body) => {
       );
     });
 
-      //重写替换后的文件
+    //重写替换后的文件
     fs.writeFile(curPath, endbody, err => {
       if (err) throw err;
     });
@@ -253,6 +272,7 @@ let matchDemo = (curPath, body) => {
 }
 /*匹配文件*/
 
+/*程序结束*/
 process.on("exit", code => {
   //必须执行同步操作
   console.log(chalk.red.bold('已匹配结束'));
@@ -261,11 +281,14 @@ process.on("exit", code => {
   console.log(`成功下载的资源数是：${succNum}个`);
   console.log(`失败下载的资源数是：${failNum}个`);
 });
+/*程序结束*/
 
-
+/*
+  程序结束前
+  当 Node.js 清空其事件循环并且没有其他工作要安排时，会触发 'beforeExit' 事件。
+*/
 process.on("beforeExit", code => {
   //可以执行异步操作
-  //当 Node.js 清空其事件循环并且没有其他工作要安排时，会触发 'beforeExit' 事件。
   if(errStr){
     fs.writeFile('./error.txt', `失败下载的资源数是：${failNum}个\r\n${errStr}`,() => {
       console.log(chalk.red.bold('已生成错误日志:error.txt'));
@@ -273,3 +296,4 @@ process.on("beforeExit", code => {
     })
   }
 });
+/*程序结束前*/
