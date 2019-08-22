@@ -7,21 +7,21 @@
 - CDNRULE：HASH；
 ```
 LOCMAP = {
-      searchPath: "/src", 从哪个位置开始搜索，字符串
+      searchPath: "/example", 从哪个位置开始搜索，字符串
       //files: [".html",".css",".phtml",".md",".vue",".sass",".scss",".less",".js"], 要匹配的文件类型
       files: [], 默认为空
       数组为空是会扫描所有类型的文件，如果不知道有什么类型的文件，推荐用，但会扫描很多不必要的文件，比如图片 字体 媒体资源等，这里不做区分，因为类型太多。
       如果明确要匹配的文件类型，请指定文件类型
-      destLocPath: path.join(__dirname, "src/www/static/localres/") 匹配到的资源存放的位置
+      destLocPath: path.join(__dirname, "example/www/static/localres/") 匹配到的资源存放的位置
 }
 ```
     
     
 ```
 EXCLUDETARGET = {
-      path:["application/controllers","application/models","application/test.html"],
+      path:["config","pub.html"],
       //path:[], 默认为空，精确到文件或者目录
-      keyword:['node_modules'] 
+      keyword:['node_modules','demo'] 
       //keyword:[] 默认为空，精确到路径关键词，区分大小写 比如：/node_modules/ 不限层级
  }
 ```
