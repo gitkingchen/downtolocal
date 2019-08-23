@@ -1,6 +1,6 @@
 {
   "name": "downtolocal",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "author": "kerrie <kingdream90@163.com>",
   "description": "Change online resources to local resource references",
   "main": "q.js",
