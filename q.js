@@ -7,7 +7,7 @@
   
     REG：要替换的资源正则（image，css，js 等）
     BIT：取HASH的位数，主要为了区分同一个项目内的资源中有相同文件名，但不是相同文件的问题
-    CDNRULE：HASH
+    CDNRULE：HASH 
     
     搜索目录：
     LOCMAP = {
