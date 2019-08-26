@@ -1,6 +1,8 @@
 # downtolocal
 ![npm](https://img.shields.io/npm/v/downtolocal) ![npm](https://img.shields.io/npm/dw/downtolocal?style=flat) ![NPM](https://img.shields.io/npm/l/downtolocal) 
+
 English | [简体中文](./README.md) 
+
 ## Introduction
 **downtolocal** —— It is a tool to change online resources to local resource references. Usually, in the work, the reference to static resources is through CDN, but it is also possible that CDN needs to be replaced in batches (such as uncontrollable factors such as domain name is about to expire, or project ideas) Local deployment), urgent processing, but too many resources, each right-click to save is really hard, so this tool was born.
 ## Use
