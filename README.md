@@ -1,5 +1,5 @@
 # downtolocal
-![npm](https://img.shields.io/npm/v/downtolocal) ![npm](https://img.shields.io/npm/dw/downtolocal?style=flat) ![NPM](https://img.shields.io/npm/l/downtolocal) 
+[![npm](https://img.shields.io/npm/v/downtolocal)](https://www.npmjs.com/package/downtolocal) [![npm](https://img.shields.io/npm/dw/downtolocal?style=flat)](https://www.npmjs.com/package/downtolocal) [![Travis (.org)](https://img.shields.io/travis/gitkingchen/downtolocal)](https://travis-ci.org/gitkingchen/downtolocal) [![GitHub](https://img.shields.io/github/license/gitkingchen/downtolocal)](https://github.com/gitkingchen/downtolocal/blob/master/LICENSE)
 
 简体中文 | [English](./README.en.md) 
 
