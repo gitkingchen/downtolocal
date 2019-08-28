@@ -1,6 +1,6 @@
 /* 
   *将线上资源改为本地资源引用
-  *@version 1.0
+  *@version 1.0.8
   *@author jinchen on 2019/08/22
   
   *参数说明：
@@ -56,7 +56,7 @@ const async = require("async");
 const request = require("request");
 const chalk = require('chalk');
 
-const REG = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhimg|qhmsg|qhres).*?\.(jpg|jpeg|gif|png|webp|ico)/g;
+const REG = /(http[s]?:)?\/\/[0-9a-zA-Z.]*(qhres|qhimg).*?\.(jpg|jpeg|gif|png|webp|ico)/g;
 const BIT = 8;
 const CDNRULE = '[0-9a-zA-Z!]{'+ BIT +',}';//8位hash，不同公司不一样，为了区分相同文件名的情况
 const LOCMAP = {
@@ -199,7 +199,7 @@ let readMatchFile = (curPath) => {
     matchDemo(curPath, body);
   });
 }
-/*读文件*/
+/*读取文件流*/
 
 /*创建目录*/
 let mkdirsSync = (name) => {
