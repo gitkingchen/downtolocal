@@ -38,6 +38,7 @@ node q.js
 - 1.Under the same level, the directories and file names named the same name will not be overwritten by each other. After the directory is created, it will be appended to the corresponding directory (Ep:demo directory and demo.html)
 - 2.The script should be placed in the outer layer to match the directory
 - 3.In a project directory, files named for the same file name, if found to have the same name when matching, will use the hash value in the CDN to distinguish
+- 4.This tool is not used as a business dependency. After downloading, please configure the above related parameters to use. The package contains, for example, a directory as a demonstration.
 
 ## Optimization point
 - 1.Add matching all file functions
