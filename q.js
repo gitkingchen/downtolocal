@@ -207,7 +207,7 @@ let mkdirsSync = (name) => {
     return true;
   } else {
     if (mkdirsSync(path.dirname(name))) {
-      fs.mkdirSync(name,0777);
+      fs.mkdirSync(name);
       return true;
     }
   }
